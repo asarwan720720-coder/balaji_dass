@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 
 <head>
 
@@ -9,9 +9,7 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
-<title>BALAJI-DASS LOGIN</title>
-
-<link rel="manifest" href="manifest.json">
+<title>Menu</title>
 
 <style>
 
@@ -22,456 +20,133 @@
 body{
   margin:0;
   font-family:Arial,sans-serif;
-  background:#eee;
-
+  background:linear-gradient(135deg,#fff7e6,#ffe0b2);
   min-height:100vh;
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-
-  padding:20px;
+  padding:20px 12px;
 }
 
-
-/* ================= MAIN CARD ================= */
-
-.login-card{
-
+.container{
   width:100%;
-  max-width:400px;
-
-  background:#fff;
-
-  padding:30px 22px;
-
-  border-radius:22px;
-
-  box-shadow:
-    0 5px 20px rgba(0,0,0,0.20);
-
-  text-align:center;
+  max-width:500px;
+  margin:auto;
 }
 
-
-/* ================= TITLE ================= */
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 5px 20px rgba(0,0,0,.10);
+}
 
 .title{
-
-  font-size:27px;
-
+  text-align:center;
+  font-size:24px;
   font-weight:bold;
-
-  color:red;
-
-  margin-bottom:20px;
-}
-
-
-/* ================= OPEN ID ================= */
-
-.open-id{
-
-  width:100%;
-
-  padding:14px;
-
-  margin-bottom:20px;
-
-  background:#f7f7f7;
-
-  border-radius:14px;
-
-  font-size:18px;
-
-  font-weight:bold;
-
   color:#222;
-
-  border:1px solid #ddd;
+  margin-bottom:20px;
 }
 
+.buttons{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
-/* ================= INPUT ================= */
-
-.input-box{
+.menuBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
   width:100%;
+  min-height:55px;
 
-  padding:15px;
-
-  margin:9px 0;
-
-  border-radius:14px;
-
-  border:1px solid #ddd;
-
-  outline:none;
-
-  font-size:16px;
-
-  background:#fafafa;
-}
-
-.input-box:focus{
-
-  border-color:red;
-
-  background:#fff;
-}
-
-
-/* ================= LOGIN BUTTON ================= */
-
-.login-btn{
-
-  width:100%;
-
-  padding:15px;
-
-  margin-top:12px;
-
-  background:red;
-
-  color:white;
-
-  border:none;
-
-  border-radius:30px;
-
-  font-size:18px;
-
-  font-weight:bold;
-
-  cursor:pointer;
-}
-
-
-/* ================= ERROR BOX ================= */
-
-#errorBox{
-
-  display:none;
-
-  width:100%;
-
-  margin-top:15px;
-
-  padding:14px;
-
-  background:#fff1f1;
-
-  border:1px solid #ffb5b5;
-
-  border-radius:14px;
-
-  color:red;
-
-  font-size:14px;
-
-  font-weight:bold;
-
-  line-height:1.5;
-}
-
-
-/* ================= REGISTER TEXT ================= */
-
-.new-user{
-
-  margin-top:22px;
-
-  margin-bottom:10px;
-
-  color:#555;
-
-  font-size:15px;
-}
-
-
-/* ================= REGISTER BUTTON ================= */
-
-.register{
-
-  width:100%;
-
-  padding:15px;
-
-  background:#3498db;
-
-  color:white;
-
-  border:none;
-
-  border-radius:30px;
+  border-radius:12px;
+  background:#ff9800;
+  color:#fff;
 
   font-size:17px;
-
   font-weight:bold;
 
-  cursor:pointer;
+  text-decoration:none;
+
+  box-shadow:0 3px 8px rgba(0,0,0,.12);
+}
+
+.menuBtn:active{
+  transform:scale(.98);
 }
 
 </style>
 
 </head>
 
-
 <body>
 
+<div class="container">
 
-<!-- ================= LOGIN CARD ================= -->
+  <div class="card">
 
-<div class="login-card">
+    <div class="title">
+      Menu
+    </div>
 
+    <div class="buttons">
 
-  <div class="title">
-    🔐 BALAJI-DASS LOGIN
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/comishion.html">
+        admin-commission
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/admin_deposit.html">
+       admin_deposit
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/adminresult.html">
+      admin result
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/dusrapage.html">
+        dusrapage
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/admin_typing.html">
+   admin_typing
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/page6.html">
+        Button 6
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/page7.html">
+        Button 7
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/page8.html">
+        Button 8
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/page9.html">
+        Button 9
+      </a>
+
+      <a class="menuBtn"
+         href="https://asarwan720720-coder.github.io/balaji-app/page10.html">
+        Button 10
+      </a>
+
+    </div>
+
   </div>
-
-
-  <div class="open-id">
-    OPEN ID ✅
-  </div>
-
-
-  <input
-    type="text"
-    id="mobile"
-    class="input-box"
-    placeholder="Mobile Number"
-  >
-
-
-  <input
-    type="password"
-    id="password"
-    class="input-box"
-    placeholder="Password"
-  >
-
-
-  <button
-    class="login-btn"
-    onclick="login()">
-    LOGIN
-  </button>
-
-
-  <!-- WRONG LOGIN MESSAGE -->
-
-  <div id="errorBox">
-    MOBILE NUMBER / PASSWORD WRONG<br>
-    NOT LOGIN ID ❌
-  </div>
-
-
-  <div class="new-user">
-    New User?
-  </div>
-
-
-  <button
-    class="register"
-    onclick="window.location.href='signup.html'">
-    REGISTER NOW
-  </button>
-
 
 </div>
-
-
-<!-- ================= SUPABASE ================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-<script>
-
-
-const SUPABASE_URL =
-"https://katbdbzoufiblnnsoxkk.supabase.co";
-
-
-const SUPABASE_KEY =
-"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a";
-
-
-const client =
-window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-
-
-/* ================= AUTO LOGIN CHECK ================= */
-
-let user =
-localStorage.getItem("user");
-
-
-if(user){
-
-  window.location.href =
-  "home.html";
-
-}
-
-
-
-/* ================= LOGIN ================= */
-
-async function login(){
-
-
-  let mobile =
-  document.getElementById("mobile")
-  .value
-  .trim();
-
-
-  let password =
-  document.getElementById("password")
-  .value
-  .trim();
-
-
-  let errorBox =
-  document.getElementById("errorBox");
-
-
-  /* Hide old error */
-
-  errorBox.style.display =
-  "none";
-
-
-  /* Empty fields */
-
-  if(!mobile || !password){
-
-    errorBox.innerHTML =
-    "PLEASE ENTER MOBILE NUMBER / PASSWORD ❌";
-
-    errorBox.style.display =
-    "block";
-
-    return;
-
-  }
-
-
-
-  try{
-
-
-    let { data, error } =
-
-    await client
-
-    .from("login")
-
-    .select("id, mobile")
-
-    .eq("mobile", mobile)
-
-    .eq("password", password)
-
-    .single();
-
-
-
-    /* ================= WRONG LOGIN ================= */
-
-    if(error || !data){
-
-      errorBox.innerHTML =
-      "MOBILE NUMBER / PASSWORD WRONG<br>" +
-      "NOT LOGIN ID ❌";
-
-      errorBox.style.display =
-      "block";
-
-      return;
-
-    }
-
-
-
-    /* ================= CLEAR OLD DATA ================= */
-
-    localStorage.clear();
-
-
-
-    /* ================= SAVE USER ================= */
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-
-        id:Number(data.id),
-
-        mobile:data.mobile
-
-      })
-    );
-
-
-
-    /* ================= SAVE USER ID ================= */
-
-    localStorage.setItem(
-      "user_id",
-      data.id
-    );
-
-
-
-    console.log(
-      "LOGIN USER:",
-      data
-    );
-
-
-
-    alert(
-      "LOGIN SUCCESS ✅"
-    );
-
-
-
-    window.location.href =
-    "home.html";
-
-
-  }
-
-
-  catch(err){
-
-
-    console.log(
-      "LOGIN ERROR:",
-      err
-    );
-
-
-    errorBox.innerHTML =
-    "SERVER ERROR ❌";
-
-
-    errorBox.style.display =
-    "block";
-
-
-  }
-
-}
-
-</script>
-
 
 </body>
 
