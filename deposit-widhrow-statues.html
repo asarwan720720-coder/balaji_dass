@@ -1,0 +1,1163 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Payments</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+    font-family:Arial;
+    background:#f2f2f2;
+    padding:10px;
+    margin:0;
+}
+
+.filterBox{
+    background:#fff;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.filterRow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+select{
+    padding:9px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    background:#fff;
+    min-width:140px;
+    font-size:14px;
+}
+
+h3{
+    margin:10px 0;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    margin-bottom:20px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+    white-space:nowrap;
+}
+
+th{
+    background:#eee;
+}
+
+.tableWrap{
+    overflow-x:auto;
+}
+
+img{
+    width:70px;
+    height:70px;
+    object-fit:cover;
+    border-radius:5px;
+}
+
+button{
+    padding:5px 10px;
+    border:none;
+    border-radius:5px;
+    color:#fff;
+    cursor:pointer;
+}
+
+.approve{
+    background:green;
+}
+
+.cancel{
+    background:red;
+}
+
+.done{
+    color:green;
+    font-weight:bold;
+}
+
+.cancelled{
+    color:red;
+    font-weight:bold;
+}
+
+.empty{
+    text-align:center;
+    padding:20px;
+    color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= FILTERS ================= -->
+
+<div class="filterBox">
+
+    <div class="filterRow">
+
+        <!-- DEPOSIT / WITHDRAW -->
+        <select id="typeFilter" onchange="applyFilters()">
+            <option value="all">Deposit + Withdraw</option>
+            <option value="deposit">Deposit</option>
+            <option value="withdraw">Withdraw</option>
+        </select>
+
+        <!-- STATUS -->
+        <select id="statusFilter" onchange="applyFilters()">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Accept</option>
+            <option value="cancelled">Cancel</option>
+        </select>
+
+        <!-- DATE -->
+        <select id="dateFilter" onchange="applyFilters()">
+            <option value="all">All Date</option>
+        </select>
+
+        <!-- USER ID -->
+        <select id="userFilter" onchange="applyFilters()">
+            <option value="all">All User ID</option>
+        </select>
+
+    </div>
+
+</div>
+
+
+<!-- ================= DEPOSIT ================= -->
+
+<div id="deposit">
+
+<h3>Deposit</h3>
+
+<div class="tableWrap">
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>User</th>
+<th>Name</th>
+<th>Mobile</th>
+<th>Amount</th>
+<th>Screenshot</th>
+<th>Status</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="depositData"></tbody>
+
+</table>
+
+</div>
+</div>
+
+
+<!-- ================= WITHDRAW ================= -->
+
+<div id="withdraw">
+
+<h3>Withdraw</h3>
+
+<div class="tableWrap">
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>User</th>
+<th>Name</th>
+<th>Mobile</th>
+<th>Amount</th>
+<th>Details</th>
+<th>Status</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="withdrawData"></tbody>
+
+</table>
+
+</div>
+</div>
+
+
+<script>
+
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const client = supabase.createClient(
+    "https://katbdbzoufiblnnsoxkk.supabase.co",
+    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+
+/* =====================================================
+   AUDIO
+===================================================== */
+
+let audio = new Audio(
+    "https://www.soundjay.com/buttons/sounds/beep-07.mp3"
+);
+
+
+/* =====================================================
+   DATA
+===================================================== */
+
+let deposits = [];
+let withdraws = [];
+
+let userDetailsCache = {};
+
+let lastDepositCount = 0;
+let lastWithdrawCount = 0;
+
+
+/* =====================================================
+   GET USER DETAILS
+===================================================== */
+
+async function getUserDetails(user_id){
+
+    if(userDetailsCache[user_id]){
+        return userDetailsCache[user_id];
+    }
+
+    let { data, error } = await client
+        .from("login")
+        .select("name,mobile")
+        .eq("id", user_id)
+        .maybeSingle();
+
+    let result = data || {
+        name:"-",
+        mobile:"-"
+    };
+
+    userDetailsCache[user_id] = result;
+
+    return result;
+}
+
+
+/* =====================================================
+   LOAD DEPOSITS
+===================================================== */
+
+async function loadDeposits(){
+
+    let { data, error } = await client
+        .from("deposit_requests")
+        .select("*")
+        .order("id",{ascending:false});
+
+    if(error){
+        console.log("Deposit Error:",error);
+        return;
+    }
+
+    deposits = data || [];
+
+    for(let r of deposits){
+        await getUserDetails(r.user_id);
+    }
+
+    buildFilters();
+
+    applyFilters();
+}
+
+
+/* =====================================================
+   LOAD WITHDRAW
+===================================================== */
+
+async function loadWithdraw(){
+
+    let { data, error } = await client
+        .from("withdraw_requests")
+        .select("*")
+        .order("id",{ascending:false});
+
+    if(error){
+        console.log("Withdraw Error:",error);
+        return;
+    }
+
+    withdraws = data || [];
+
+    for(let r of withdraws){
+        await getUserDetails(r.user_id);
+    }
+
+    buildFilters();
+
+    applyFilters();
+}
+
+
+/* =====================================================
+   BUILD FILTER DROPDOWNS
+===================================================== */
+
+function buildFilters(){
+
+    /* ================= USER IDs ================= */
+
+    let ids = new Set();
+
+    deposits.forEach(r=>{
+        if(r.user_id !== null && r.user_id !== undefined){
+            ids.add(String(r.user_id));
+        }
+    });
+
+    withdraws.forEach(r=>{
+        if(r.user_id !== null && r.user_id !== undefined){
+            ids.add(String(r.user_id));
+        }
+    });
+
+    let userSelect = document.getElementById("userFilter");
+
+    let currentUser = userSelect.value;
+
+    userSelect.innerHTML =
+        '<option value="all">All User ID</option>';
+
+    [...ids]
+        .sort((a,b)=>Number(a)-Number(b))
+        .forEach(id=>{
+
+            let option = document.createElement("option");
+
+            option.value = id;
+            option.textContent = id;
+
+            userSelect.appendChild(option);
+        });
+
+    if([...ids].includes(currentUser)){
+        userSelect.value = currentUser;
+    }
+
+
+    /* ================= DATES ================= */
+
+    let dates = new Set();
+
+    deposits.forEach(r=>{
+        let d = getDateOnly(r.created_at);
+
+        if(d){
+            dates.add(d);
+        }
+    });
+
+    withdraws.forEach(r=>{
+        let d = getDateOnly(r.created_at);
+
+        if(d){
+            dates.add(d);
+        }
+    });
+
+    let dateSelect = document.getElementById("dateFilter");
+
+    let currentDate = dateSelect.value;
+
+    dateSelect.innerHTML =
+        '<option value="all">All Date</option>';
+
+    [...dates]
+        .sort((a,b)=>b.localeCompare(a))
+        .forEach(date=>{
+
+            let option = document.createElement("option");
+
+            option.value = date;
+            option.textContent = formatDate(date);
+
+            dateSelect.appendChild(option);
+        });
+
+    if([...dates].includes(currentDate)){
+        dateSelect.value = currentDate;
+    }
+}
+
+
+/* =====================================================
+   GET DATE ONLY
+===================================================== */
+
+function getDateOnly(dateValue){
+
+    if(!dateValue){
+        return "";
+    }
+
+    let d = new Date(dateValue);
+
+    if(isNaN(d.getTime())){
+        return "";
+    }
+
+    let year = d.getFullYear();
+
+    let month = String(
+        d.getMonth()+1
+    ).padStart(2,"0");
+
+    let day = String(
+        d.getDate()
+    ).padStart(2,"0");
+
+    return `${year}-${month}-${day}`;
+}
+
+
+/* =====================================================
+   FORMAT DATE
+===================================================== */
+
+function formatDate(date){
+
+    if(!date){
+        return "-";
+    }
+
+    let parts = date.split("-");
+
+    if(parts.length !== 3){
+        return date;
+    }
+
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
+
+/* =====================================================
+   FORMAT DATE TIME
+===================================================== */
+
+function formatDateTime(value){
+
+    if(!value){
+        return "-";
+    }
+
+    let d = new Date(value);
+
+    if(isNaN(d.getTime())){
+        return value;
+    }
+
+    return d.toLocaleString("en-IN",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"numeric",
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+}
+
+
+/* =====================================================
+   APPLY ALL FILTERS
+===================================================== */
+
+function applyFilters(){
+
+    let type =
+        document.getElementById("typeFilter").value;
+
+    let status =
+        document.getElementById("statusFilter").value;
+
+    let date =
+        document.getElementById("dateFilter").value;
+
+    let user =
+        document.getElementById("userFilter").value;
+
+
+    /* ================= DEPOSIT ================= */
+
+    let filteredDeposits = deposits.filter(r=>{
+
+        if(type === "withdraw"){
+            return false;
+        }
+
+        if(status !== "all"){
+
+            if(status === "pending" &&
+               r.status !== "pending"){
+                return false;
+            }
+
+            if(status === "approved" &&
+               r.status !== "approved"){
+                return false;
+            }
+
+            if(status === "cancelled" &&
+               r.status !== "cancelled"){
+                return false;
+            }
+        }
+
+        if(date !== "all"){
+
+            if(getDateOnly(r.created_at) !== date){
+                return false;
+            }
+        }
+
+        if(user !== "all"){
+
+            if(String(r.user_id) !== String(user)){
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+
+    /* ================= WITHDRAW ================= */
+
+    let filteredWithdraws = withdraws.filter(r=>{
+
+        if(type === "deposit"){
+            return false;
+        }
+
+        if(status !== "all"){
+
+            if(status === "pending" &&
+               r.status !== "pending"){
+                return false;
+            }
+
+            if(status === "approved" &&
+               r.status !== "approved"){
+                return false;
+            }
+
+            if(status === "cancelled" &&
+               r.status !== "cancelled"){
+                return false;
+            }
+        }
+
+        if(date !== "all"){
+
+            if(getDateOnly(r.created_at) !== date){
+                return false;
+            }
+        }
+
+        if(user !== "all"){
+
+            if(String(r.user_id) !== String(user)){
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+
+    renderDeposits(filteredDeposits);
+
+    renderWithdraws(filteredWithdraws);
+}
+
+
+/* =====================================================
+   RENDER DEPOSIT
+===================================================== */
+
+function renderDeposits(data){
+
+    let html = "";
+
+    if(data.length === 0){
+
+        html = `
+        <tr>
+            <td colspan="9" class="empty">
+                No Deposit Found
+            </td>
+        </tr>`;
+
+        document.getElementById("depositData").innerHTML = html;
+
+        return;
+    }
+
+
+    data.forEach(r=>{
+
+        let userInfo =
+            userDetailsCache[r.user_id] || {
+                name:"-",
+                mobile:"-"
+            };
+
+
+        let action = "";
+
+        if(r.status === "approved"){
+
+            action =
+            `<span class="done">✔ Approved</span>`;
+
+        }
+        else if(r.status === "cancelled"){
+
+            action =
+            `<span class="cancelled">
+                ❌ Cancelled
+            </span>`;
+
+        }
+        else{
+
+            action = `
+            <button
+                class="approve"
+                onclick="approveDeposit(
+                    ${r.id},
+                    ${r.user_id},
+                    ${r.amount || 0}
+                )">
+                Approve
+            </button>
+
+            <button
+                class="cancel"
+                onclick="cancelDeposit(${r.id})">
+                Cancel
+            </button>`;
+        }
+
+
+        let screenshot = "-";
+
+        if(r.screenshot){
+
+            let url =
+                r.screenshot.toString().trim();
+
+            if(url.includes("http")){
+
+                screenshot =
+                `<img src="${url}"
+                      onclick="window.open('${url}')">`;
+
+            }
+        }
+
+
+        html += `
+        <tr>
+
+            <td>${r.id}</td>
+
+            <td>${r.user_id}</td>
+
+            <td>${userInfo.name}</td>
+
+            <td>${userInfo.mobile}</td>
+
+            <td>${r.amount ?? 0}</td>
+
+            <td>${screenshot}</td>
+
+            <td>${r.status || "-"}</td>
+
+            <td>${formatDateTime(r.created_at)}</td>
+
+            <td>${action}</td>
+
+        </tr>`;
+    });
+
+
+    document.getElementById("depositData").innerHTML = html;
+}
+
+
+/* =====================================================
+   RENDER WITHDRAW
+===================================================== */
+
+function renderWithdraws(data){
+
+    let html = "";
+
+    if(data.length === 0){
+
+        html = `
+        <tr>
+            <td colspan="9" class="empty">
+                No Withdraw Found
+            </td>
+        </tr>`;
+
+        document.getElementById("withdrawData").innerHTML = html;
+
+        return;
+    }
+
+
+    data.forEach(r=>{
+
+        let userInfo =
+            userDetailsCache[r.user_id] || {
+                name:"-",
+                mobile:"-"
+            };
+
+
+        let action = "";
+
+        if(r.status === "approved"){
+
+            action =
+            `<span class="done">
+                ✔ Approved
+            </span>`;
+
+        }
+        else if(r.status === "cancelled"){
+
+            action =
+            `<span class="cancelled">
+                ❌ Cancelled
+            </span>`;
+
+        }
+        else{
+
+            action = `
+            <button
+                class="approve"
+                onclick="approveWithdraw(${r.id})">
+                Approve
+            </button>
+
+            <button
+                class="cancel"
+                onclick="cancelWithdraw(${r.id})">
+                Cancel
+            </button>`;
+        }
+
+
+        let details = "-";
+
+
+        if(r.screenshot){
+
+            let url =
+                r.screenshot.toString().trim();
+
+            if(url.includes("http")){
+
+                details =
+                `<img src="${url}"
+                      onclick="window.open('${url}')">`;
+
+            }
+            else{
+
+                details = url;
+            }
+        }
+
+        else if(r.upi){
+
+            details = r.upi;
+        }
+
+
+        html += `
+        <tr>
+
+            <td>${r.id}</td>
+
+            <td>${r.user_id}</td>
+
+            <td>${userInfo.name}</td>
+
+            <td>${userInfo.mobile}</td>
+
+            <td>${r.amount ?? 0}</td>
+
+            <td>${details}</td>
+
+            <td>${r.status || "-"}</td>
+
+            <td>${formatDateTime(r.created_at)}</td>
+
+            <td>${action}</td>
+
+        </tr>`;
+    });
+
+
+    document.getElementById("withdrawData").innerHTML = html;
+}
+
+
+/* =====================================================
+   APPROVE DEPOSIT
+===================================================== */
+
+async function approveDeposit(id,user_id,amount){
+
+    let { data: check, error } = await client
+        .from("deposit_requests")
+        .select("status")
+        .eq("id",id)
+        .single();
+
+
+    if(error){
+
+        alert("Request check failed");
+
+        console.log(error);
+
+        return;
+    }
+
+
+    if(check.status === "approved"){
+
+        alert("Already Approved");
+
+        return;
+    }
+
+
+    if(check.status === "cancelled"){
+
+        alert("This request is already cancelled");
+
+        return;
+    }
+
+
+    let { error:updateError } = await client
+        .from("deposit_requests")
+        .update({
+            status:"approved"
+        })
+        .eq("id",id);
+
+
+    if(updateError){
+
+        alert("Deposit status update failed");
+
+        console.log(updateError);
+
+        return;
+    }
+
+
+    let { data, error:balanceError } = await client
+        .from("login")
+        .select("balance")
+        .eq("id",user_id)
+        .single();
+
+
+    if(balanceError){
+
+        alert("User balance read failed");
+
+        console.log(balanceError);
+
+        return;
+    }
+
+
+    let newBalance =
+        (Number(data.balance) || 0) +
+        (Number(amount) || 0);
+
+
+    let { error:loginError } = await client
+        .from("login")
+        .update({
+            balance:newBalance
+        })
+        .eq("id",user_id);
+
+
+    if(loginError){
+
+        alert("Balance update failed");
+
+        console.log(loginError);
+
+        return;
+    }
+
+
+    audio.play().catch(()=>{});
+
+    alert("Deposit Approved ✅");
+
+    await loadDeposits();
+}
+
+
+/* =====================================================
+   CANCEL DEPOSIT
+===================================================== */
+
+async function cancelDeposit(id){
+
+    let { error } = await client
+        .from("deposit_requests")
+        .update({
+            status:"cancelled"
+        })
+        .eq("id",id);
+
+
+    if(error){
+
+        alert("Cancel failed");
+
+        console.log(error);
+
+        return;
+    }
+
+
+    await loadDeposits();
+}
+
+
+/* =====================================================
+   APPROVE WITHDRAW
+===================================================== */
+
+async function approveWithdraw(id){
+
+    let { error } = await client
+        .from("withdraw_requests")
+        .update({
+            status:"approved"
+        })
+        .eq("id",id);
+
+
+    if(error){
+
+        alert("Withdraw approve failed");
+
+        console.log(error);
+
+        return;
+    }
+
+
+    audio.play().catch(()=>{});
+
+    alert("Withdraw Approved ✅");
+
+    await loadWithdraw();
+}
+
+
+/* =====================================================
+   CANCEL WITHDRAW
+===================================================== */
+
+async function cancelWithdraw(id){
+
+    let { error } = await client
+        .from("withdraw_requests")
+        .update({
+            status:"cancelled"
+        })
+        .eq("id",id);
+
+
+    if(error){
+
+        alert("Cancel failed");
+
+        console.log(error);
+
+        return;
+    }
+
+
+    await loadWithdraw();
+}
+
+
+/* =====================================================
+   CHECK NEW REQUESTS
+===================================================== */
+
+async function checkNewRequests(){
+
+    let { data: dep } =
+        await client
+        .from("deposit_requests")
+        .select("id");
+
+
+    let { data: wid } =
+        await client
+        .from("withdraw_requests")
+        .select("id");
+
+
+    dep = dep || [];
+    wid = wid || [];
+
+
+    if(
+        lastDepositCount === 0 &&
+        lastWithdrawCount === 0
+    ){
+
+        lastDepositCount = dep.length;
+
+        lastWithdrawCount = wid.length;
+
+        return;
+    }
+
+
+    if(dep.length > lastDepositCount){
+
+        audio.play().catch(()=>{});
+
+        alert("New Deposit 🔥");
+
+        await loadDeposits();
+    }
+
+
+    if(wid.length > lastWithdrawCount){
+
+        audio.play().catch(()=>{});
+
+        alert("New Withdraw 🔥");
+
+        await loadWithdraw();
+    }
+
+
+    lastDepositCount = dep.length;
+
+    lastWithdrawCount = wid.length;
+}
+
+
+/* =====================================================
+   AUTO CHECK EVERY 5 SECONDS
+===================================================== */
+
+setInterval(
+    checkNewRequests,
+    5000
+);
+
+
+/* =====================================================
+   FIRST LOAD
+===================================================== */
+
+loadDeposits();
+
+loadWithdraw();
+
+
+/* =====================================================
+   HASH FILTER
+   #deposit
+   #withdraw
+===================================================== */
+
+window.addEventListener("load",()=>{
+
+    let hash =
+        window.location.hash;
+
+
+    if(hash === "#deposit"){
+
+        document.getElementById(
+            "withdraw"
+        ).style.display = "none";
+
+        document.getElementById(
+            "typeFilter"
+        ).value = "deposit";
+
+        applyFilters();
+    }
+
+
+    if(hash === "#withdraw"){
+
+        document.getElementById(
+            "deposit"
+        ).style.display = "none";
+
+        document.getElementById(
+            "typeFilter"
+        ).value = "withdraw";
+
+        applyFilters();
+    }
+
+});
+
+</script>
+
+</body>
+</html>
+```
